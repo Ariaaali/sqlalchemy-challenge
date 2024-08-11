@@ -1,7 +1,8 @@
 # Import the dependencies.
 from sqlalchemy import func
+import numpy as np
 from sqlalchemy import create_engine, inspect
-from flask import Flask, jsonifyimport sqlalchemy
+from flask import Flask, jsonify 
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
@@ -32,23 +33,43 @@ session=Session(engine)
 app = Flask(__name__)
 @app.route("/")
 def home():
+    """List all available api routes."""
     return  (
-        f"/api/v1.0/precipitation"
-        f"/api/v1.0/stations"
-        f"/api/v1.0/stations"
-        f"/api/v1.0/<start>"
-        f"/api/v1.0/<start>/<end>"
+        f"//api/v1.0/precipitation <br/>"
+        f"/api/v1.0/stations <br/>"
+        f"/api/v1.0/tobs <br/>"
+        f"/api/v1.0/<start> <br/>"
+        f"//api/v1.0/<start>/<end>"
     )
-
-prcp_query=session.query(Measurement.prcp).filter(Measurement.date.between('2016-08-23' , '2017-08-23')).all()
-
 
 #################################################
 # Flask Routes
-@app.route("/precipitation")
+@app.route("/api/v1.0/precipitation")
 def precipitation():
-     """Return the precipitationas json"""
+    """Return the precipitation"""
+    prcp_query=session.query(Measurement.date,Measurement.prcp).filter(Measurement.date.between('2016-08-23' , '2017-08-23')).all()
+    session.close()
+    precipitation = []
 
-    return jsonify(prcp_query)
+    for date, prcp in prcp_query:
+        precipitation_dict = {}
+        precipitation_dict["date"] = date
+        precipitation_dict["precipitation"] = prcp
+        
+        precipitation.append(precipitation_dict)
+    return jsonify(precipitation)
+
+@app.route("/api/v1.0/stations")
+def station():
+    """Return the list of station"""
+    station_query=session.query(Measurement.station).all()
+    session.close()
+    station_names = list(np.ravel(station_query))
+    return jsonify(station_names)
   
 #################################################
+if __name__ == '__main__':
+    app.run(debug=True)
+
+
+
